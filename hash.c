@@ -12,9 +12,9 @@ main(int argc, char *argv[])
   unsigned char hash[SHA_DIGEST_LENGTH];
   SHA1(argv[2], length, hash);
   
-  int fd = open(argv[1], O_WRONLY);
+  int fd = open(argv[1], O_WRONLY | O_CREAT, 0700);
   if (fd < 0) {
-    printf("AOEUAOEU"); 
+    perror("open"); 
   }
   write(fd, hash, SHA_DIGEST_LENGTH);
   
