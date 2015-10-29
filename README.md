@@ -18,5 +18,17 @@ when committing:
 		- it creates hashes the contents of index
 		- saves the contents in the same fashion as files and directories in object store
 		- clears the index
-		
+	
+git stores branches as:
+	- .git/refs/heads/<branchname>
+	- inside it has the commit hash that the commit is at
+	
+HEAD?!?:
+	- git stores a reference to what you are currently looking at
+	- stored as a .git/HEAD file.
+	- the contents are 'ref: .git/refs/heads/<branchname>'
+	- OR '<hashofcommit>' (in detached mode)
+	- it is effectively a pointer to a pointer
+
+Optimize storage with: diffs, and compression
 Add some utilities for branching, logging, etc...
