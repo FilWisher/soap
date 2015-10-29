@@ -8,6 +8,14 @@
 char *prefix = ".wil";
 
 int
+string_to_hex(unsigned char *str, char *hex)
+{
+  for (int i = 0; i < strlen(str); i++) {
+    sprintf(&hex[i*2], "%02x", str[i]); 
+  }
+}
+
+int
 create_dir(char *name)
 {
   struct stat st = {0};
@@ -29,7 +37,7 @@ int
 open_file(char *name)
 {
   int fd;
-  if ((fd = open(name, O_WRONLY | O_CREAT, 0700)) < 0) {
+  if ((fd = open(name, O_RDONLY | O_CREAT, 0700)) < 0) {
     perror("open"); 
   }
   return fd;
@@ -48,7 +56,7 @@ write_file(int fd, unsigned char *text)
 int
 make_file_path(char *filename, char *path)
 {
-  strcat(path, prefix);
+  strncpy(path, prefix, strlen(prefix)+1);
   strcat(path, "/");
   strcat(path, filename);
   return 1;
@@ -60,11 +68,23 @@ copy_contents(char *file_src, char *file_dst)
   /* TODO: check errors */
   int fd_src, fd_dst;
   char buffer[1024];
-  fd_src = open(file_src, O_RDONLY);
-  fd_dst = open(file_src, O_WRONLY);
-  while (read(fd_src, buffer, 1024) > 0) {
-    write(fd_dst, buffer, 1024); 
+  if((fd_src = open(file_src, O_RDONLY)) < 0) {
+    goto error; 
   }
+  if((fd_dst = open(file_dst, O_WRONLY | O_CREAT, 0700)) < 0) {
+    goto error;   
+  }
+  while (read(fd_src, buffer, 1024) > 0) {
+    write(fd_dst, buffer, strlen(buffer)); 
+  }
+  close(fd_src);
+  close(fd_dst);
+  return 1;
+
+error:
+  close(fd_src);
+  close(fd_src);
+  return 0;
 }
 
 int
@@ -72,21 +92,25 @@ main(int argc, char *argv[])
 {
   int fd;
   unsigned char hash[SHA_DIGEST_LENGTH];
+  char hex_hash[SHA_DIGEST_LENGTH];
   char path[1000];
   char contents[10000];
   char *target = argv[1];
 
-  int target_fd = open_file(target);
-  read(target_fd, contents, 1024);
-  
-  create_hash(contents, hash);
-  
-  make_file_path(hash, path);
-  
-  printf("path: %s\n", path);
   create_dir(prefix);
+  
+  int target_fd = open_file(target);
+  if (read(target_fd, contents, 10000) < 0) {
+    perror("read"); 
+  }
  
+  create_hash(contents, hash);
+  string_to_hex(hash, hex_hash); 
+  make_file_path(hex_hash, path);
+  
   copy_contents(target, path);
+ 
+  close(target_fd);
   
   return 0;
 }
